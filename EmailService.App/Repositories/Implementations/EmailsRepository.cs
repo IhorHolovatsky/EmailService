@@ -24,7 +24,7 @@ namespace EmailService.App.Repositories.Implementations
                                  FROM
                                    `testserveremail`.`emailstosend`
                                  WHERE 
-                                    sent = 0";
+                                    sent = 4";
                 var command = connection.CreateCommand();
                 command.CommandText = sqlQuery;
 
@@ -65,16 +65,29 @@ namespace EmailService.App.Repositories.Implementations
             {
                 await connection.OpenAsync();
 
-                var sqlQuery = @"UPDATE emailstosend
+                string sqlQuery;
+                switch (status)
+                {
+                    case EmailStatus.Sent:
+                        sqlQuery = @"UPDATE emailstosend
+                                 SET sent = @status,
+                                     emailpassword = ''
+                                 WHERE emailid = @emailId";
+                        break;
+                    default:
+                        sqlQuery = @"UPDATE emailstosend
                                  SET sent = @status,
                                      actuallysent = @sentTime
                                  WHERE emailid = @emailId";
+                        break;
+                }
+
                 var command = connection.CreateCommand();
                 command.CommandText = sqlQuery;
                 command.Parameters.AddWithValue("@emailId", emailId);
                 command.Parameters.AddWithValue("@status", (int)status);
-                command.Parameters.AddWithValue("@sentTime", status == EmailStatus.Sent 
-                                                                ? (object)DateTime.Now 
+                command.Parameters.AddWithValue("@sentTime", status == EmailStatus.Sent
+                                                                ? (object)DateTime.Now
                                                                 : null);
 
                 await command.ExecuteReaderAsync();
