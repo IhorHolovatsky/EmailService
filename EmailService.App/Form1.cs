@@ -32,17 +32,22 @@ namespace EmailService.App
         public CancellationTokenSource CancellationToken { get; set; } = new CancellationTokenSource();
         public Task EmailSendingWorker { get; set; }
         public Task AttachmentsCleanupTask { get; set; }
+        public Task PingTask { get; set; }
 
         #region Configuration
+        public string EnvironmentName => ConfigurationManager.AppSettings["EnvironmentName"];
+        public string AppName => ConfigurationManager.AppSettings["AppName"];
         public int EmailSendingInterval => int.Parse(ConfigurationManager.AppSettings["EmailSendingInterval"]);
         public int AttachmentsCleanupInterval => int.Parse(ConfigurationManager.AppSettings["AttachmentsCleanupInterval"]);
         public int MaxEmailsPerUserPerBatch => int.Parse(ConfigurationManager.AppSettings["MaxEmailsPerUserPerBatch"]);
+        public int PingInterval => int.Parse(ConfigurationManager.AppSettings["PingInterval"]);
         public int? MaxCcCount => ConfigurationManager.AppSettings.GetAppConfigValue<int?>("MaxCcCount");
         public int? MaxBccCount => ConfigurationManager.AppSettings.GetAppConfigValue<int?>("MaxBccCount");
         #endregion
 
         private readonly IEmailsRepository _emailsRepository = new EmailsRepository();
         private readonly IAwsFileRepository _awsFileRepository = new AwsFileRepository();
+        private readonly IMonitoringRepository _monitoringRepository = new MonitoringRepository();
         private readonly ConcurrentQueue<string> _attachmentsToDelete = new ConcurrentQueue<string>();
 
         /// <summary>
@@ -60,6 +65,11 @@ namespace EmailService.App
 
             AttachmentsCleanupTask = new Task(CleanupAttachments);
             AttachmentsCleanupTask.Start();
+
+            Task.WaitAll(_monitoringRepository.InitAsync(EnvironmentName, AppName));
+
+            PingTask = new Task(DoPing);
+            PingTask.Start();
         }
 
         private void btnStart_Click(object sender, EventArgs e)
@@ -174,6 +184,23 @@ namespace EmailService.App
 
 
                 Thread.Sleep(AttachmentsCleanupInterval * 1000);
+            }
+        }
+
+        private void DoPing()
+        {
+            while (true)
+            {
+                try
+                {
+                    _log.Debug($"[{nameof(PingTask)}] Pinging.");
+                    Task.WaitAll(_monitoringRepository.SendImAliveAsync(EnvironmentName, AppName, DateTime.Now));
+                }
+                catch (Exception e)
+                {
+                    _log.Error($"{nameof(PingTask)} was stopped because of exception.", e);
+                }
+                Thread.Sleep(PingInterval * 1000);
             }
         }
 

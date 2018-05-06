@@ -107,8 +107,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repositories\IAwsFileRepository.cs" />
     <Compile Include="Repositories\IEmailsRepository.cs" />
+    <Compile Include="Repositories\IMonitoringRepository.cs" />
     <Compile Include="Repositories\Implementations\AwsFileRepository.cs" />
     <Compile Include="Repositories\Implementations\EmailsRepository.cs" />
+    <Compile Include="Repositories\Implementations\MonitoringRepository.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
