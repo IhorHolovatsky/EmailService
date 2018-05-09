@@ -19,12 +19,15 @@ namespace EmailService.App.Repositories.Implementations
             {
                 await connection.OpenAsync();
 
+                //So email status should be 0 - NotSent and enteredindb time + delay 
+                //should be less or quals to now datetime
                 var sqlQuery = @"SELECT
                                  *
                                  FROM
                                    `testserveremail`.`emailstosend`
                                  WHERE 
-                                    sent = 4";
+                                    sent = 0
+                                    AND TIMESTAMPADD(SECOND, `delay`, `enteredindb`) <= NOW()";
                 var command = connection.CreateCommand();
                 command.CommandText = sqlQuery;
 
