@@ -24,7 +24,7 @@ namespace EmailService.App.Repositories.Implementations
                                  FROM
                                    `testserveremail`.`emailstosend`
                                  WHERE 
-                                    sent = 4";
+                                    sent = 0";
                 var command = connection.CreateCommand();
                 command.CommandText = sqlQuery;
 
@@ -71,6 +71,7 @@ namespace EmailService.App.Repositories.Implementations
                     case EmailStatus.Sent:
                         sqlQuery = @"UPDATE emailstosend
                                  SET sent = @status,
+                                     actuallysent = @sentTime,
                                      emailpassword = ''
                                  WHERE emailid = @emailId";
                         break;
